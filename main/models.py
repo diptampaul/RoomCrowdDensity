@@ -7,4 +7,5 @@ class ImageUpload(models.Model):
     file_path = models.CharField(max_length = 150)
     head_count = models.IntegerField(null=True)
     ratio = models.FloatField(null=True)
+    availablity = models.CharField(max_length = 10, null=True)      #Red - > No Space ;  Yellow - > Still Chance; Green - > Available
     created_timestamp = models.DateTimeField(blank=False, auto_now_add=True)

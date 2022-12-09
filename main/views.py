@@ -42,17 +42,23 @@ class UploadView(APIView):
                 data = image_h_obj.analyze_file()
                 if data == None:
                     raise BadRequest("Cude is required to run the model")
+                count = data['count']
+                ratio = data['ratio']
+                color = image_h_obj.get_availablity(data['ratio'])
                 
                 image_db_obj = ImageUpload()
                 image_db_obj.file_name = str(up_file)
                 image_db_obj.file_path = str(file_path)
-                image_db_obj.head_count = data['count']
-                image_db_obj.ratio = data['ratio']
+                image_db_obj.head_count = count
+                image_db_obj.ratio = ratio
+                image_db_obj.availablity = color
                 image_db_obj.save()
                 
                 return Response({"errorCode" : 0,
                                 "message" : "Success",
-                                "uploaded-file": str(up_file)}, status=status.HTTP_202_ACCEPTED)
+                                "head_count" : count,
+                                "density_ratio" : ratio,
+                                "availablity" : color}, status=status.HTTP_202_ACCEPTED)
             else:
                 raise BadRequest("Invalid Image Format")
         

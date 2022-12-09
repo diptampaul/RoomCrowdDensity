@@ -33,7 +33,6 @@ class ImageHandle:
             pickled_model = pickle.load(open(self.custom_model, 'rb'))
         except:
             return None
-
         img = transform(Image.open(self.path).convert('RGB')).cuda()
         output = pickled_model(img.unsqueeze(0))
         count = int(output.detach().cpu().sum().numpy())
@@ -51,3 +50,11 @@ class ImageHandle:
         ratio = len(ps)/len(ns)
         print(f"Ratio : {ratio}")
         return {"count" : count, "ratio" : ratio}
+
+    def get_availablity(self, ratio):
+        if ratio < 2.0:
+            return "Green"
+        elif ratio < 6.0:
+            return "Yellow"
+        else:
+            return "Red"
