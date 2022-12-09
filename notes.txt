@@ -1,0 +1,5 @@
+curl --location --request POST 'http://127.0.0.1:8000/upload/' \
+--header 'content-Disposition: attachment; filename="image.jpg"' \
+--header 'filename: image/jpeg' \
+--header 'Content-Type: multipart/form-data' \
+--data-binary '@/home/diptam.paul/Downloads/50.jpg'
