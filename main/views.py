@@ -21,7 +21,7 @@ class UploadView(APIView):
         return HttpResponse("Welcome !! Crowd Density Detection")
 
     def post(self, request, format='jpg'):
-        # try:
+        try:
             try:
                 up_file = self.request.FILES.get('file')
             except:
@@ -40,6 +40,8 @@ class UploadView(APIView):
                 image_h_obj = ImageHandle(self.directory, file_name, up_file)
                 image_h_obj.create_file()
                 data = image_h_obj.analyze_file()
+                if data == None:
+                    raise BadRequest("Cude is required to run the model")
                 
                 image_db_obj = ImageUpload()
                 image_db_obj.file_name = str(up_file)
@@ -54,9 +56,9 @@ class UploadView(APIView):
             else:
                 raise BadRequest("Invalid Image Format")
         
-        # except Exception as e:
-        #     print(e)
-        #     return Response({"message": str(e), "errorCode" : 1}, status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+        except Exception as e:
+            print(e)
+            return Response({"message": str(e), "errorCode" : 1}, status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
 
     def put(self, request, filename, **kwargs):
         print(request.data)

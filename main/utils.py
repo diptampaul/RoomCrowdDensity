@@ -2,6 +2,7 @@
 import PIL.Image as Image
 import numpy as np
 import os
+import sys
 from torchvision import transforms
 transform=transforms.Compose([
                       transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -16,6 +17,7 @@ class ImageHandle:
         self.path = os.path.join(self.directory, self.filename)
         self.file = file
         self.custom_model = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "media", "model_details", "finalized_model.pkl")
+        self.model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "media", "model_details")
     
     
     def create_file(self):
@@ -26,8 +28,11 @@ class ImageHandle:
                 
                 
     def analyze_file(self):
-        print(f"Model : {self.custom_model}")
-        pickled_model = pickle.load(open(self.custom_model, 'rb'))
+        sys.path.append(self.model_path)
+        try:
+            pickled_model = pickle.load(open(self.custom_model, 'rb'))
+        except:
+            return None
 
         img = transform(Image.open(self.path).convert('RGB')).cuda()
         output = pickled_model(img.unsqueeze(0))
