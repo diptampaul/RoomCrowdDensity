@@ -52,9 +52,9 @@ class ImageHandle:
         return {"count" : count, "ratio" : ratio}
 
     def get_availablity(self, ratio):
-        if ratio < 2.0:
+        if ratio < 2.3:
             return "Green"
-        elif ratio < 6.0:
+        elif ratio < 5.0:
             return "Yellow"
         else:
             return "Red"
