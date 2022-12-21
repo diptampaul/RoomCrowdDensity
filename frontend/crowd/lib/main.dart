@@ -1,4 +1,10 @@
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,92 +30,148 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const Home(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class Home extends StatefulWidget {
+  const Home({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<Home> createState() => _ImageUploadState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ImageUploadState extends State<Home> {
+  File? image;
+  final _picker = ImagePicker();
+  bool showSpinner = false;
 
-  void _incrementCounter() {
+  Future getImage()async{
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if(pickedFile != null){
+      image = File(pickedFile.path);
+      setState(() {
+
+      });
+    }else{
+      print("Image didn't uploaded properly");
+    }
+  }
+
+  Future<void> uploadImage()async{
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      showSpinner = true;
+    });
+    var stream = http.ByteStream(image!.openRead());
+    stream.cast();
+    var length = await image!.length();
+    print(length);
+
+    // Sending Request
+    var headers = {
+      'content-Disposition': 'attachment; filename="image.jpg"',
+      'Content-Type': 'multipart/form-data'
+    };
+    var request = http.MultipartRequest('POST', Uri.parse('http://192.168.1.7:8000/upload/'));
+    request.files.add(await http.MultipartFile('file', stream, length,
+        filename: basename(image!.path)));
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 202) {
+      print("Image Uploaded successfully");
+      print(await response.stream.bytesToString());
+    }
+    else {
+      print("Image Upload Failed");
+      print(response.reasonPhrase);
+    }
+
+    setState(() {
+      showSpinner = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
+    return ModalProgressHUD(
+      inAsyncCall: showSpinner,
+      child: Scaffold(
+        backgroundColor: Colors.grey[900],
+        appBar: AppBar(
+          title: const Text("Crowd Detection App"),
+          centerTitle: true,
+          backgroundColor: Colors.grey[850],
+          elevation: 0.0,
+        ),
+
+        body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: (){
+                getImage();
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.photo_library,
+                    color: Colors.white70,
+                  ),
+                  const SizedBox(
+                    width: 20.0,
+                  ),
+                  Container(
+                    child: image == null ? const Center(
+                      child: Text(
+                        "Pick an image",
+                        style: TextStyle(
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ) : Center(
+                      child: Image.file(
+                        File(image!.path).absolute,
+                        height: 200.0,
+                        width: 200.0,
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            const SizedBox(
+              height: 20.0,
             ),
+            ElevatedButton(
+              onPressed: (){
+                uploadImage();
+                },
+              style: ButtonStyle(
+                  foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                  backgroundColor: MaterialStateProperty.all<Color>(Colors.black),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.0),
+                          side: BorderSide(color: Colors.red)
+                      )
+                  )
+              ),
+              child: Text(
+                  "Upload".toUpperCase(),
+                  style: const TextStyle(fontSize: 14)
+              ),
+            ),
+
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

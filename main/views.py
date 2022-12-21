@@ -5,13 +5,16 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import FileUploadParser, MultiPartParser
 import os
 from .utils import ImageHandle
 from .models import ImageUpload
 
+
+def home(request):
+    return HttpResponse("In the home")
 class UploadView(APIView):
-    parser_classes = (FileUploadParser,)
+    parser_classes = (MultiPartParser,)
     # print(timezone.now().strftime("%m/%d/%Y, %H:%M:%S"))
     today = timezone.now().strftime("%d-%m-%Y")
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,8 +24,9 @@ class UploadView(APIView):
         return HttpResponse("Welcome !! Crowd Density Detection")
 
     def post(self, request, format='jpg'):
-        try:
+        # try:
             try:
+                print(request.FILES)
                 up_file = self.request.FILES.get('file')
             except:
                 raise BadRequest("Image Upload Failed")
@@ -62,9 +66,9 @@ class UploadView(APIView):
             else:
                 raise BadRequest("Invalid Image Format")
         
-        except Exception as e:
-            print(e)
-            return Response({"message": str(e), "errorCode" : 1}, status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+        # except Exception as e:
+        #     print(e)
+        #     return Response({"message": str(e), "errorCode" : 1}, status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
 
     def put(self, request, filename, **kwargs):
         print(request.data)
