@@ -56,5 +56,7 @@ class ImageHandle:
             return "Green"
         elif ratio < 5.0:
             return "Yellow"
+        elif ratio < 8.0:
+            return "Blue"
         else:
             return "Red"
